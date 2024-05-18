@@ -1,0 +1,4 @@
+package edges
+
+class EdgesServerSocketService {
+}
