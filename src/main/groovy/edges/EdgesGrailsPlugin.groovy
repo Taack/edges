@@ -2,14 +2,11 @@ package edges
 
 import grails.compiler.GrailsCompileStatic
 import grails.plugins.Plugin
-import taack.ui.TaackPlugin
-import taack.ui.TaackPluginConfiguration
-
 /*
 TODO: put user extra configuration accessible to server to centralize configuration
 */
 @GrailsCompileStatic
-class EdgesGrailsPlugin extends Plugin implements TaackPlugin {
+class EdgesGrailsPlugin extends Plugin {
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "4.0.3 > *"
     // resources that are excluded from plugin packaging
@@ -51,24 +48,5 @@ class EdgesGrailsPlugin extends Plugin implements TaackPlugin {
        // TODO Implement code that is executed when the application shuts down (optional)
     }
 
-    static final List<TaackPluginConfiguration.PluginRole> pluginRoles = [
-           new TaackPluginConfiguration.PluginRole("ROLE_EDGES_DIRECTOR", TaackPluginConfiguration.PluginRole.RoleRanking.DIRECTOR),
-           new TaackPluginConfiguration.PluginRole("ROLE_EDGES_MANAGER", TaackPluginConfiguration.PluginRole.RoleRanking.MANAGER),
-           new TaackPluginConfiguration.PluginRole("ROLE_EDGES_USER", TaackPluginConfiguration.PluginRole.RoleRanking.USER),
-    ]
-
-    static final TaackPluginConfiguration pluginConfiguration = new TaackPluginConfiguration("Edges",
-           "/edges/edges.svg", "edges",
-           new TaackPluginConfiguration.IPluginRole() {
-               @Override
-               List<TaackPluginConfiguration.PluginRole> getPluginRoles() {
-                   pluginRoles
-               }
-           })
-
-    @Override
-    List<TaackPluginConfiguration> getTaackPluginControllerConfigurations() {
-       [pluginConfiguration]
-    }
 }
 
