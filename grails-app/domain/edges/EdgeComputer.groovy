@@ -15,6 +15,7 @@ class EdgeComputer {
 
     String name
     EdgeUser computerOwner
+    boolean server = false
 
     String getKeyStoreFileName() {
         "${computerOwner.baseUser.username}-${name}-${id}.ks"

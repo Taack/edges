@@ -1,5 +1,6 @@
 package edges
 
+import crew.CrewController
 import crew.User
 import crew.config.SupportedLanguage
 import grails.compiler.GrailsCompileStatic
@@ -14,12 +15,17 @@ import taack.solr.SolrFieldType
 import taack.solr.SolrSpecifier
 import taack.ui.dsl.UiBlockSpecifier
 import taack.ui.dsl.UiFilterSpecifier
+import taack.ui.dsl.UiFormSpecifier
 import taack.ui.dsl.UiMenuSpecifier
 import taack.ui.dsl.UiTableSpecifier
+import taack.ui.dsl.common.ActionIcon
+import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
 
 import javax.annotation.PostConstruct
 import java.nio.file.Path
+
+import static taack.render.TaackUiService.tr
 
 @GrailsCompileStatic
 class EdgesUiService implements TaackSearchService.IIndexService {
@@ -71,6 +77,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
     UiMenuSpecifier buildMenu(String q = null) {
         UiMenuSpecifier m = new UiMenuSpecifier()
         m.ui {
+            menu EdgesController.&listEdgeUser as MC
             menu EdgesController.&index as MC
             menuSearch EdgesController.&search as MC, q
             menuOptions(SupportedLanguage.fromContext())
@@ -105,8 +112,52 @@ class EdgesUiService implements TaackSearchService.IIndexService {
             iterate(taackFilterService.getBuilder(EdgeComputer).build()) { EdgeComputer computer ->
                 rowField computer.lastUpdated_
                 rowField computer.userCreated_
-                rowField computer.name, Style.BOLD
+                rowColumn {
+                    rowAction ActionIcon.DOWNLOAD * IconStyle.SCALE_DOWN, EdgesController.&downloadBinKeyStore as MC, computer.id
+                    rowField computer.name, Style.BOLD
+                }
                 rowField computer.computerOwner_
+            }
+        }
+    }
+
+    UiFilterSpecifier edgeUserFilter() {
+        EdgeUser eu = new EdgeUser()
+        EdgeComputer ec = new EdgeComputer()
+        User u = new User()
+
+        new UiFilterSpecifier().ui EdgeUser, {
+            section {
+                filterField eu.baseUser_, u.username_
+                filterField eu.computers_, ec.name_
+            }
+        }
+    }
+
+
+    UiTableSpecifier edgeUserTable(boolean selectMode = false) {
+        EdgeComputer ec = new EdgeComputer()
+        EdgeUser eu = new EdgeUser()
+        User u = new User()
+
+        new UiTableSpecifier().ui {
+            header {
+                sortableFieldHeader eu.lastUpdated_
+                sortableFieldHeader eu.userCreated_
+                sortableFieldHeader eu.baseUser_, u.username_
+                label eu.computers_
+            }
+
+            iterate(taackFilterService.getBuilder(EdgeUser).build()) { EdgeUser edgeUser ->
+                rowField edgeUser.lastUpdated_
+                rowField edgeUser.userCreated_
+                rowColumn {
+                    if (selectMode = true) {
+                        rowAction tr('default.select.label'), ActionIcon.SELECT * IconStyle.SCALE_DOWN, edgeUser.id, edgeUser.toString()
+                    }
+                    rowField edgeUser.baseUser.username, Style.BOLD
+                }
+                rowField eu.computers*.name.join(', ')
             }
         }
     }
@@ -114,6 +165,24 @@ class EdgesUiService implements TaackSearchService.IIndexService {
     String labeling(Long id) {
         def ec = EdgeComputer.read(id)
         "Computer: ${ec.name} owner ${ec.computerOwner.baseUser.username} ($id)"
+    }
+
+    UiFormSpecifier editComputer(EdgeComputer computer) {
+        new UiFormSpecifier().ui computer, {
+            section {
+                field computer.name_
+                field computer.server_
+                ajaxField computer.computerOwner_, EdgesController.&selectEdgeUser as MC
+            }
+        }
+    }
+
+    UiFormSpecifier editUser(EdgeUser user) {
+        new UiFormSpecifier().ui user, {
+            section {
+                ajaxField user.baseUser_, CrewController.&selectUserM2O as MC
+            }
+        }
     }
 
     @Override
