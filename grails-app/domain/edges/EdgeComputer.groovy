@@ -21,6 +21,10 @@ class EdgeComputer {
     }
 
     static constraints = {
-        name(unique: ['computerOwner'])
+        name unique: ['computerOwner'], validator: { String s ->
+            if (!s.matches(/[A-Za-z0-9]+/))
+                return 'name.alphanum.only.validator'
+            else return true
+        }
     }
 }
