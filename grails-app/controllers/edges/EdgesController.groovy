@@ -66,7 +66,7 @@ class EdgesController implements WebAttributes {
         })
     }
 
-    def selectEdgeUser(EdgeUser edgeUser) {
+    def selectEdgeUser() {
         taackUiService.show(new UiBlockSpecifier().ui {
             modal {
                 tableFilter edgesUiService.edgeUserFilter(), edgesUiService.edgeUserTable(true), {
@@ -78,16 +78,22 @@ class EdgesController implements WebAttributes {
     }
 
     def downloadBinKeyStore(EdgeComputer computer) {
-        edgesManageKeyStoreService.createEdgeComputerKeyStore(computer)
-        edgesManageKeyStoreService.exportCertificate(computer)
-        EdgeComputer.all.each {
-            if (computer.id != it.id) {
-                edgesManageKeyStoreService.importTrustCertificate(computer, it)
-                edgesManageKeyStoreService.importTrustCertificate(it, computer)
-            }
-        }
+        edgesManageKeyStoreService.createAll()
         response.setHeader("Content-disposition", "attachment;filename=${computer.keyStoreFileName}")
         response.outputStream << edgesManageKeyStoreService.ksPath(computer).toFile().bytes
+        try {
+            response.outputStream.flush()
+            response.outputStream.close()
+        } catch (e) {
+            log.error "${e.message}"
+        }
+    }
+
+    def downloadBinGlobalTrustStore() {
+        edgesManageKeyStoreService.createAll()
+        File ts = edgesUiService.globalTrustStorePath.toFile()
+        response.setHeader("Content-disposition", "attachment;filename=${ts.name}")
+        response.outputStream << ts.bytes
         try {
             response.outputStream.flush()
             response.outputStream.close()

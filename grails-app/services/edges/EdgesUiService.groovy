@@ -41,6 +41,10 @@ class EdgesUiService implements TaackSearchService.IIndexService {
         Path.of(rootPath).resolve EdgesConf.keyStorePath
     }
 
+    Path getGlobalTrustStorePath() {
+        edgesKeystorePath.resolve('globalTruststore.jks')
+    }
+
     @PostConstruct
     void init() {
         TaackAppRegisterService.register(
@@ -86,6 +90,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
         m.ui {
             menu EdgesController.&listEdgeUser as MC
             menu EdgesController.&listEdgeComputer as MC
+            menuIcon ActionIcon.DOWNLOAD, EdgesController.&downloadBinGlobalTrustStore as MC
             menuSearch EdgesController.&search as MC, q
             menuOptions(SupportedLanguage.fromContext())
         }
