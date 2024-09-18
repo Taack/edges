@@ -23,4 +23,9 @@ class EdgeUser {
     static hasMany = [
             computers: EdgeComputer
     ]
+
+    @Override
+    String toString() {
+        return baseUser.username + "($id)"
+    }
 }

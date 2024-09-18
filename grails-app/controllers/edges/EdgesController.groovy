@@ -21,6 +21,7 @@ class EdgesController implements WebAttributes {
 
     TaackUiService taackUiService
     EdgesUiService edgesUiService
+    EdgesManageKeyStoreService edgesManageKeyStoreService
     TaackSaveService taackSaveService
 
     def index() {
@@ -40,7 +41,7 @@ class EdgesController implements WebAttributes {
         taackUiService.show(new UiBlockSpecifier().ui {
             tableFilter(edgesUiService.edgeUserFilter(), edgesUiService.edgeUserTable()) {
                 menu this.&listEdgeUser as MC
-                menuIcon ActionIcon.CREATE, this.&createEdgeUser as MC
+                menuIcon ActionIcon.CREATE, this.&editEdgeUser as MC
             }
         }, edgesUiService.buildMenu())
     }
@@ -70,17 +71,33 @@ class EdgesController implements WebAttributes {
             modal {
                 tableFilter edgesUiService.edgeUserFilter(), edgesUiService.edgeUserTable(true), {
                     label(tr('default.select.label'))
-                    menuIcon ActionIcon.ADD, EdgesController.&createEdgeUser as MC
+                    menuIcon ActionIcon.ADD, EdgesController.&editEdgeUser as MC
                 }
             }
         })
     }
 
     def downloadBinKeyStore(EdgeComputer computer) {
+        edgesManageKeyStoreService.createEdgeComputerKeyStore(computer)
+        edgesManageKeyStoreService.exportCertificate(computer)
+        EdgeComputer.all.each {
+            if (computer.id != it.id) {
+                edgesManageKeyStoreService.importTrustCertificate(computer, it)
+                edgesManageKeyStoreService.importTrustCertificate(it, computer)
+            }
+        }
+        response.setHeader("Content-disposition", "attachment;filename=${computer.keyStoreFileName}")
+        response.outputStream << edgesManageKeyStoreService.ksPath(computer).toFile().bytes
+        try {
+            response.outputStream.flush()
+            response.outputStream.close()
+        } catch (e) {
+            log.error "${e.message}"
+        }
     }
 
     @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
-    def createEdgeUser(EdgeUser user) {
+    def editEdgeUser(EdgeUser user) {
         user ?= new EdgeUser()
         taackUiService.show(new UiBlockSpecifier().ui {
             modal {

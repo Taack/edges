@@ -16,7 +16,7 @@ class EdgesManageKeyStoreService {
         }
     }
 
-    private Path ksPath(EdgeComputer computer) {
+    Path ksPath(EdgeComputer computer) {
         edgesUiService.edgesKeystorePath.resolve(computer.keyStoreFileName)
     }
 
@@ -28,7 +28,7 @@ class EdgesManageKeyStoreService {
         File ksf = ksPath(computer).toFile()
 
         if (!ksf.exists()) {
-            String cmd = "keytool -genkey " +
+            String cmd = "keytool -dname CN=${computer.keyStoreEntryName} -genkey " +
                     "-keypass ${computer.keyStorePasswd} " +
                     "-storepass ${computer.keyStorePasswd} " +
                     "-keyalg RSA -keystore ${ksf.path}"
@@ -72,7 +72,7 @@ class EdgesManageKeyStoreService {
                     "-keystore ${ksf.path}"
             executeCmd(cmd)
         } else {
-            String msg = "Cannot import certif ${crf.path} in ${crf.path}"
+            String msg = "Cannot import certif ${crf.path} in ${ksf.path}"
             log.error(msg)
             throw new Exception(msg)
         }

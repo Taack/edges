@@ -4,6 +4,7 @@ import crew.CrewController
 import crew.User
 import crew.config.SupportedLanguage
 import grails.compiler.GrailsCompileStatic
+import grails.plugin.springsecurity.SpringSecurityService
 import org.codehaus.groovy.runtime.MethodClosure as MC
 import org.grails.datastore.gorm.GormEntity
 import org.springframework.beans.factory.annotation.Value
@@ -11,13 +12,10 @@ import taack.app.TaackApp
 import taack.app.TaackAppRegisterService
 import taack.domain.TaackFilterService
 import taack.domain.TaackSearchService
+import taack.render.TaackUiEnablerService
 import taack.solr.SolrFieldType
 import taack.solr.SolrSpecifier
-import taack.ui.dsl.UiBlockSpecifier
-import taack.ui.dsl.UiFilterSpecifier
-import taack.ui.dsl.UiFormSpecifier
-import taack.ui.dsl.UiMenuSpecifier
-import taack.ui.dsl.UiTableSpecifier
+import taack.ui.dsl.*
 import taack.ui.dsl.common.ActionIcon
 import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
@@ -32,6 +30,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
 
     TaackFilterService taackFilterService
     TaackSearchService taackSearchService
+    SpringSecurityService springSecurityService
 
     static lazyInit = false
 
@@ -72,6 +71,14 @@ class EdgesUiService implements TaackSearchService.IIndexService {
 
                 })
         )
+
+        TaackUiEnablerService.securityClosure({ Long id, Map p ->
+            canDownload(EdgeComputer.read(id))
+        }, EdgesController.&downloadBinKeyStore as MC)
+    }
+
+    boolean canDownload(EdgeComputer ec) {
+        ec.computerOwner.baseUser.id == springSecurityService.currentUserId
     }
 
     UiMenuSpecifier buildMenu(String q = null) {
@@ -113,6 +120,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                 rowField computer.lastUpdated_
                 rowField computer.userCreated_
                 rowColumn {
+                    rowAction ActionIcon.EDIT * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputer as MC, computer.id
                     rowAction ActionIcon.DOWNLOAD * IconStyle.SCALE_DOWN, EdgesController.&downloadBinKeyStore as MC, computer.id
                     rowField computer.name, Style.BOLD
                 }
@@ -152,12 +160,14 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                 rowField edgeUser.lastUpdated_
                 rowField edgeUser.userCreated_
                 rowColumn {
-                    if (selectMode = true) {
+                    if (selectMode) {
                         rowAction tr('default.select.label'), ActionIcon.SELECT * IconStyle.SCALE_DOWN, edgeUser.id, edgeUser.toString()
+                    } else {
+                        rowAction ActionIcon.EDIT * IconStyle.SCALE_DOWN, EdgesController.&editEdgeUser as MC, edgeUser.id
                     }
                     rowField edgeUser.baseUser.username, Style.BOLD
                 }
-                rowField eu.computers*.name?.join(', ')
+                rowField edgeUser.computers*.name?.join(', ')
             }
         }
     }
