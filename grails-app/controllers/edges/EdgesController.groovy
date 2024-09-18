@@ -2,9 +2,11 @@ package edges
 
 import crew.User
 import grails.compiler.GrailsCompileStatic
+import grails.gorm.transactions.Transactional
 import grails.plugin.springsecurity.annotation.Secured
 import grails.web.api.WebAttributes
 import org.codehaus.groovy.runtime.MethodClosure as MC
+import taack.domain.TaackSaveService
 import taack.render.TaackUiService
 import taack.ui.dsl.UiBlockSpecifier
 import taack.ui.dsl.UiShowSpecifier
@@ -19,11 +21,16 @@ class EdgesController implements WebAttributes {
 
     TaackUiService taackUiService
     EdgesUiService edgesUiService
+    TaackSaveService taackSaveService
 
     def index() {
+        redirect action: 'listEdgeUser'
+    }
+
+    def listEdgeComputer() {
         taackUiService.show(new UiBlockSpecifier().ui {
             tableFilter(edgesUiService.computerFilter(), edgesUiService.computerTable()) {
-                menu this.&index as MC
+                menu this.&listEdgeComputer as MC
                 menuIcon ActionIcon.CREATE, this.&editEdgeComputer as MC
             }
         }, edgesUiService.buildMenu())
@@ -33,7 +40,7 @@ class EdgesController implements WebAttributes {
         taackUiService.show(new UiBlockSpecifier().ui {
             tableFilter(edgesUiService.edgeUserFilter(), edgesUiService.edgeUserTable()) {
                 menu this.&listEdgeUser as MC
-                menu this.&createEdgeUser as MC
+                menuIcon ActionIcon.CREATE, this.&createEdgeUser as MC
             }
         }, edgesUiService.buildMenu())
     }
@@ -72,6 +79,7 @@ class EdgesController implements WebAttributes {
     def downloadBinKeyStore(EdgeComputer computer) {
     }
 
+    @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
     def createEdgeUser(EdgeUser user) {
         user ?= new EdgeUser()
         taackUiService.show(new UiBlockSpecifier().ui {
@@ -81,6 +89,7 @@ class EdgesController implements WebAttributes {
         })
     }
 
+    @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
     def editEdgeComputer(EdgeComputer edgeComputer) {
         edgeComputer ?= new EdgeComputer()
         taackUiService.show(new UiBlockSpecifier().ui {
@@ -88,6 +97,18 @@ class EdgesController implements WebAttributes {
                 form edgesUiService.editComputer(edgeComputer)
             }
         })
+    }
+
+    @Transactional
+    @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
+    def saveEdgeComputer() {
+        taackSaveService.saveThenReloadOrRenderErrors(EdgeComputer)
+    }
+
+    @Transactional
+    @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
+    def saveEdgeUser() {
+        taackSaveService.saveThenReloadOrRenderErrors(EdgeUser)
     }
 }
 

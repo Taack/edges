@@ -46,7 +46,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
     void init() {
         TaackAppRegisterService.register(
                 new TaackApp(
-                        EdgesController.&index as MC,
+                        EdgesController.&listEdgeUser as MC,
                         new String(
                                 this.class
                                         .getResourceAsStream("/edges/edges.svg")
@@ -78,7 +78,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
         UiMenuSpecifier m = new UiMenuSpecifier()
         m.ui {
             menu EdgesController.&listEdgeUser as MC
-            menu EdgesController.&index as MC
+            menu EdgesController.&listEdgeComputer as MC
             menuSearch EdgesController.&search as MC, q
             menuOptions(SupportedLanguage.fromContext())
         }
@@ -157,7 +157,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                     }
                     rowField edgeUser.baseUser.username, Style.BOLD
                 }
-                rowField eu.computers*.name.join(', ')
+                rowField eu.computers*.name?.join(', ')
             }
         }
     }
@@ -174,6 +174,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                 field computer.server_
                 ajaxField computer.computerOwner_, EdgesController.&selectEdgeUser as MC
             }
+            formAction EdgesController.&saveEdgeComputer as MC
         }
     }
 
@@ -182,6 +183,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
             section {
                 ajaxField user.baseUser_, CrewController.&selectUserM2O as MC
             }
+            formAction EdgesController.&saveEdgeUser as MC
         }
     }
 
