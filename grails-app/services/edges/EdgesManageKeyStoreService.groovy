@@ -13,6 +13,11 @@ class EdgesManageKeyStoreService {
             Process p = cmd.execute()
             p.consumeProcessOutput()
             p.waitForOrKill(30 * 1000)
+            int ev = p.exitValue()
+            if (ev != 0) {
+                log.info "AUO exit = ${ev}"
+                log.error "${p.errorStream.text}"
+            }
         }
     }
 
@@ -28,7 +33,7 @@ class EdgesManageKeyStoreService {
         File ksf = ksPath(computer).toFile()
 
         if (!ksf.exists()) {
-            String cmd = "keytool -dname CN=${computer.keyStoreEntryName} -genkey " +
+            String cmd = "keytool -alias ${computer.keyStoreEntryName} -dname CN=${computer.keyStoreEntryName} -genkeypair " +
                     "-keypass ${computer.keyStorePasswd} " +
                     "-storepass ${computer.keyStorePasswd} " +
                     "-keyalg RSA -keystore ${ksf.path}"
@@ -47,7 +52,7 @@ class EdgesManageKeyStoreService {
         File crf = cerPath(computer).toFile()
 
         if (ksf.exists() && !crf.exists()) {
-            String cmd = "keytool -export " +
+            String cmd = "keytool  -alias ${computer.keyStoreEntryName} -exportcert " +
                     "-storepass ${computer.keyStorePasswd} " +
                     "-file ${crf.path} -keystore ${ksf.path}"
             executeCmd(cmd)
@@ -64,8 +69,11 @@ class EdgesManageKeyStoreService {
         File ksf = ksPath(toComputer).toFile()
         File crf = cerPath(fromComputer).toFile()
 
+        if (!ksf.exists()) createEdgeComputerKeyStore(toComputer)
+        if (!crf.exists()) exportCertificate(fromComputer)
+
         if (ksf.exists() && crf.exists()) {
-            String cmd = "keytool -import " +
+            String cmd = "keytool -noprompt -alias ${fromComputer.keyStoreEntryName} -importcert " +
                     "-trustcacerts -file ${crf.path} " +
                     "-keypass ${fromComputer.keyStorePasswd} " +
                     "-storepass ${toComputer.keyStorePasswd} " +
@@ -78,19 +86,4 @@ class EdgesManageKeyStoreService {
         }
     }
 
-
-/*
-    1.
-    ~/.jdks/jbrsdk-17.0.9-1/bin/keytool -genkey -keypass password -storepass password -keyalg RSA -keystore serverkeystore.jks
-    Quels sont vos nom et prénom ?
-    [Unknown]:  localhost
-    Quel est le nom de votre unité organisationnelle ?
-    [Unknown]:  CiO
-
-    2.
-    ~/.jdks/jbrsdk-17.0.9-1/bin/keytool -export -storepass password -file server.cer -keystore serverkeystore.jks
-
-    3.
-    ~/.jdks/jbrsdk-17.0.9-1/bin/keytool -import -v -trustcacerts -file server.cer -keypass password -storepass password -keystore clienttruststore.jks
-    */
 }
