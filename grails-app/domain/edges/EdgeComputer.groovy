@@ -14,11 +14,16 @@ class EdgeComputer {
     User userUpdated
 
     String name
+    String keyStorePasswd
     EdgeUser computerOwner
     boolean server = false
 
+    String getKeyStoreEntryName() {
+        "${computerOwner.baseUser.username}-${name}"
+    }
+
     String getKeyStoreFileName() {
-        "${computerOwner.baseUser.username}-${name}-${id}.ks"
+        "${keyStoreEntryName}-${id}.jks"
     }
 
     static constraints = {

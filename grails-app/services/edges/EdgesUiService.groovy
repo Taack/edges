@@ -171,6 +171,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
         new UiFormSpecifier().ui computer, {
             section {
                 field computer.name_
+                field computer.keyStorePasswd_
                 field computer.server_
                 ajaxField computer.computerOwner_, EdgesController.&selectEdgeUser as MC
             }
