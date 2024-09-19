@@ -10,6 +10,9 @@ class EdgesManageKeyStoreService {
     final private Object cmdOnKeyStore = new Object()
     EdgesUiService edgesUiService
 
+    final boolean useKeyStoreAlias = false
+    final boolean useTrustStoreAlias = true
+
     private void executeCmd(String cmd) {
         synchronized (cmdOnKeyStore) {
             log.info "AUO EdgesManageKeyStoreService executing $cmd"
@@ -36,7 +39,7 @@ class EdgesManageKeyStoreService {
         File ksf = ksPath(computer).toFile()
 
         if (!ksf.exists()) {
-            String cmd = "keytool -alias ${computer.keyStoreEntryName} -dname CN=${computer.keyStoreEntryName} -genkeypair " +
+            String cmd = "keytool ${useKeyStoreAlias ? "-alias ${computer.keyStoreEntryName}" : ''} -dname CN=${computer.keyStoreEntryName} -genkeypair " +
                     "-keypass ${computer.keyStorePasswd} " +
                     "-storepass ${computer.keyStorePasswd} " +
                     "-keyalg RSA -keystore ${ksf.path}"
@@ -55,7 +58,7 @@ class EdgesManageKeyStoreService {
         File crf = cerPath(computer).toFile()
 
         if (ksf.exists() && !crf.exists()) {
-            String cmd = "keytool -alias ${computer.keyStoreEntryName} -exportcert " +
+            String cmd = "keytool ${useKeyStoreAlias ? "-alias ${computer.keyStoreEntryName}" : ''} -exportcert " +
                     "-storepass ${computer.keyStorePasswd} " +
                     "-file ${crf.path} -keystore ${ksf.path}"
             executeCmd(cmd)
@@ -73,7 +76,7 @@ class EdgesManageKeyStoreService {
         File crf = cerPath(fromComputer).toFile()
 
         if (crf.exists()) {
-            String cmd = "keytool -noprompt -alias ${fromComputer.keyStoreEntryName} -importcert " +
+            String cmd = "keytool -noprompt ${useTrustStoreAlias ? "-alias ${fromComputer.keyStoreEntryName}" : ''} -importcert " +
                     "-trustcacerts -file ${crf.path} " +
                     "-keypass ${fromComputer.keyStorePasswd} " +
                     "-storepass globalTruststorePass " +
