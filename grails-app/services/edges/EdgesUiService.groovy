@@ -8,6 +8,7 @@ import grails.plugin.springsecurity.SpringSecurityService
 import org.codehaus.groovy.runtime.MethodClosure as MC
 import org.grails.datastore.gorm.GormEntity
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.buffer.DataBufferUtils
 import taack.app.TaackApp
 import taack.app.TaackAppRegisterService
 import taack.domain.TaackFilterService
@@ -16,6 +17,7 @@ import taack.render.TaackUiEnablerService
 import taack.solr.SolrFieldType
 import taack.solr.SolrSpecifier
 import taack.ui.dsl.*
+import taack.ui.dsl.block.BlockSpec
 import taack.ui.dsl.common.ActionIcon
 import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
@@ -212,5 +214,27 @@ class EdgesUiService implements TaackSearchService.IIndexService {
     UiBlockSpecifier buildSearchBlock(String q) {
         taackSearchService.search(q, EdgesController.&search as MC, User)
     }
+
+    UiFormSpecifier editEdgeComputerMatcher(EdgeComputerMatcher matcher) {
+        new UiFormSpecifier().ui EdgeComputerMatcher, {
+            section('Matcher') {
+                ajaxField matcher.rootPath_, EdgesController.&selectRootPath as MC
+                ajaxField matcher.contentTypeEnumSet_, EdgesController.&selectContentType as MC
+                ajaxField matcher.contentTypeCategoryEnum_, EdgesController.&selectContentTypeCategory as MC
+            }
+            section('Security') {
+                ajaxField matcher.documentAccess_, EdgesController.&selectDocAccess as MC
+            }
+        }
+    }
+
+    UiTableSpecifier tableEdgeComputerMatcher() {
+
+    }
+
+    UiFilterSpecifier filterEdgeComputerMatcher() {
+
+    }
+
 }
 

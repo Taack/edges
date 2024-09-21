@@ -133,5 +133,9 @@ class EdgesController implements WebAttributes {
     def saveEdgeUser() {
         taackSaveService.saveThenReloadOrRenderErrors(EdgeUser)
     }
+
+    def selectRootPath() {
+
+    }
 }
 
