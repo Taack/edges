@@ -1,5 +1,6 @@
 package edges
 
+import crew.AttachmentController
 import crew.CrewController
 import crew.User
 import crew.config.SupportedLanguage
@@ -8,7 +9,6 @@ import grails.plugin.springsecurity.SpringSecurityService
 import org.codehaus.groovy.runtime.MethodClosure as MC
 import org.grails.datastore.gorm.GormEntity
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.io.buffer.DataBufferUtils
 import taack.app.TaackApp
 import taack.app.TaackAppRegisterService
 import taack.domain.TaackFilterService
@@ -17,7 +17,6 @@ import taack.render.TaackUiEnablerService
 import taack.solr.SolrFieldType
 import taack.solr.SolrSpecifier
 import taack.ui.dsl.*
-import taack.ui.dsl.block.BlockSpec
 import taack.ui.dsl.common.ActionIcon
 import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
@@ -127,6 +126,7 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                 rowField computer.lastUpdated_
                 rowField computer.userCreated_
                 rowColumn {
+                    rowAction ActionIcon.ADD * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputerMatcher as MC, [computerId: computer.id]
                     rowAction ActionIcon.EDIT * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputer as MC, computer.id
                     rowAction ActionIcon.DOWNLOAD * IconStyle.SCALE_DOWN, EdgesController.&downloadBinKeyStore as MC, computer.id
                     rowField computer.name, Style.BOLD
@@ -217,24 +217,49 @@ class EdgesUiService implements TaackSearchService.IIndexService {
 
     UiFormSpecifier editEdgeComputerMatcher(EdgeComputerMatcher matcher) {
         new UiFormSpecifier().ui EdgeComputerMatcher, {
-            section('Matcher') {
-                ajaxField matcher.rootPath_, EdgesController.&selectRootPath as MC
-                ajaxField matcher.contentTypeEnumSet_, EdgesController.&selectContentType as MC
-                ajaxField matcher.contentTypeCategoryEnum_, EdgesController.&selectContentTypeCategory as MC
+            hiddenField matcher.computer_
+            row {
+                col {
+                    section('Matcher') {
+                        field matcher.rootPath_
+                        field matcher.contentTypeEnumSet_
+                        field matcher.contentTypeCategoryEnum_
+                    }
+                }
+                col {
+                    section('Security') {
+                        field matcher.descend_
+                        ajaxField matcher.documentAccess_, AttachmentController.&editAttachmentDescriptor as MC
+                    }
+                }
             }
-            section('Security') {
-                ajaxField matcher.documentAccess_, EdgesController.&selectDocAccess as MC
-            }
+            formAction EdgesController.&saveEdgeComputerMatcher as MC
         }
     }
 
-    UiTableSpecifier tableEdgeComputerMatcher() {
+    UiTableSpecifier listEdgeComputerMatcher(EdgeComputer computer) {
+        EdgeComputerMatcher ecm = new EdgeComputerMatcher()
+        new UiTableSpecifier().ui {
+            header {
+                sortableFieldHeader ecm.fileExt_
+                sortableFieldHeader ecm.filePattern_
+                sortableFieldHeader ecm.rootPath_
+                label ecm.contentTypeEnumSet_
+                sortableFieldHeader ecm.contentTypeCategoryEnum_
+            }
 
+            EdgeComputerMatcher.findAllByComputer(computer)*.id
+
+            iterate(taackFilterService.getBuilder(EdgeComputerMatcher)
+                    .addRestrictedIds(EdgeComputerMatcher.findAllByComputer(computer)*.id as Long[])
+                    .build()) { EdgeComputerMatcher ecmIt ->
+                rowField ecmIt.fileExt
+                rowField ecmIt.filePattern
+                rowField ecmIt.rootPath
+                rowField ecmIt.contentTypeEnumSet_
+                rowField ecmIt.contentTypeCategoryEnum_
+            }
+        }
     }
-
-    UiFilterSpecifier filterEdgeComputerMatcher() {
-
-    }
-
 }
 

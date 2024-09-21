@@ -1,5 +1,6 @@
 package edges
 
+
 import crew.User
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
@@ -122,6 +123,24 @@ class EdgesController implements WebAttributes {
         })
     }
 
+    def editEdgeComputerMatcher(EdgeComputerMatcher edgeComputerMatcher) {
+        edgeComputerMatcher ?= new EdgeComputerMatcher(computer: EdgeComputer.get(params.long('computerId')))
+        taackUiService.show(new UiBlockSpecifier().ui {
+            modal {
+                form edgesUiService.editEdgeComputerMatcher(edgeComputerMatcher)
+            }
+        })
+    }
+
+    def listEdgeComputerMatcher(EdgeComputer computer) {
+        taackUiService.show(new UiBlockSpecifier().ui {
+            modal {
+                table edgesUiService.listEdgeComputerMatcher(computer)
+            }
+        })
+
+    }
+
     @Transactional
     @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
     def saveEdgeComputer() {
@@ -134,8 +153,11 @@ class EdgesController implements WebAttributes {
         taackSaveService.saveThenReloadOrRenderErrors(EdgeUser)
     }
 
-    def selectRootPath() {
-
+    @Transactional
+    @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN'])
+    def saveEdgeComputerMatcher() {
+        taackSaveService.saveThenReloadOrRenderErrors(EdgeComputerMatcher)
     }
+
 }
 
