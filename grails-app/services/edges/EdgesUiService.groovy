@@ -3,9 +3,9 @@ package edges
 import crew.AttachmentController
 import crew.CrewController
 import crew.User
-import crew.config.SupportedLanguage
 import grails.compiler.GrailsCompileStatic
 import grails.plugin.springsecurity.SpringSecurityService
+import grails.web.api.WebAttributes
 import org.codehaus.groovy.runtime.MethodClosure as MC
 import org.grails.datastore.gorm.GormEntity
 import org.springframework.beans.factory.annotation.Value
@@ -16,7 +16,10 @@ import taack.domain.TaackSearchService
 import taack.render.TaackUiEnablerService
 import taack.solr.SolrFieldType
 import taack.solr.SolrSpecifier
-import taack.ui.dsl.*
+import taack.ui.dsl.UiBlockSpecifier
+import taack.ui.dsl.UiFilterSpecifier
+import taack.ui.dsl.UiFormSpecifier
+import taack.ui.dsl.UiTableSpecifier
 import taack.ui.dsl.common.ActionIcon
 import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
@@ -27,7 +30,7 @@ import java.nio.file.Path
 import static taack.render.TaackUiService.tr
 
 @GrailsCompileStatic
-class EdgesUiService implements TaackSearchService.IIndexService {
+class EdgesUiService implements WebAttributes, TaackSearchService.IIndexService {
 
     TaackFilterService taackFilterService
     TaackSearchService taackSearchService
@@ -91,18 +94,6 @@ class EdgesUiService implements TaackSearchService.IIndexService {
         ec.computerOwner.baseUser.id == springSecurityService.currentUserId
     }
 
-    UiMenuSpecifier buildMenu(String q = null) {
-        UiMenuSpecifier m = new UiMenuSpecifier()
-        m.ui {
-            menu EdgesController.&listEdgeUser as MC
-            menu EdgesController.&listEdgeComputer as MC
-            menuIcon ActionIcon.DOWNLOAD, EdgesController.&downloadBinGlobalTrustStore as MC
-            menuSearch EdgesController.&search as MC, q
-            menuOptions(SupportedLanguage.fromContext())
-        }
-        m
-    }
-
     UiFilterSpecifier computerFilter() {
         EdgeUser eu = new EdgeUser()
         EdgeComputer ec = new EdgeComputer()
@@ -133,7 +124,6 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                 rowColumn {
                     rowAction ActionIcon.EDIT * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputer as MC, computer.id
                     rowAction ActionIcon.DOWNLOAD * IconStyle.SCALE_DOWN, EdgesController.&downloadBinKeyStore as MC, computer.id
-                    rowAction ActionIcon.SHOW * IconStyle.SCALE_DOWN, EdgesController.&listEdgeComputerMatcher as MC, computer.id
                     rowField computer.name, Style.BOLD
                 }
                 rowField computer.computerOwner_

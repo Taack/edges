@@ -2,14 +2,20 @@ package edges
 
 
 import crew.User
+import crew.config.SupportedLanguage
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
+import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.annotation.Secured
 import grails.web.api.WebAttributes
 import org.codehaus.groovy.runtime.MethodClosure as MC
 import taack.domain.TaackSaveService
 import taack.render.TaackUiService
+import taack.ui.EnumOption
+import taack.ui.IEnumOption
+import taack.ui.IEnumOptions
 import taack.ui.dsl.UiBlockSpecifier
+import taack.ui.dsl.UiMenuSpecifier
 import taack.ui.dsl.UiShowSpecifier
 import taack.ui.dsl.common.ActionIcon
 import taack.ui.dsl.common.IconStyle
@@ -21,10 +27,67 @@ import static taack.render.TaackUiService.tr
 @Secured(['ROLE_ADMIN', 'ROLE_EDGES_ADMIN', 'ROLE_EDGES_USER'])
 class EdgesController implements WebAttributes {
 
+    static scope = "session"
+
     TaackUiService taackUiService
     EdgesUiService edgesUiService
     EdgesManageKeyStoreService edgesManageKeyStoreService
     TaackSaveService taackSaveService
+    SpringSecurityService springSecurityService
+
+    private final static String myComputerId = 'myComputerId'
+    Long currentComputerId = null
+
+    private static IEnumOption createIEnumOption(EdgeComputer computer) {
+        if (computer)
+            return new EnumOption(computer.id.toString(), computer.name)
+        else
+            return new EnumOption("", tr('select.a.computer'))
+
+    }
+
+    private UiMenuSpecifier buildMenu(String q = null) {
+        if (params.containsKey(myComputerId))
+            currentComputerId = params.long(myComputerId)
+
+        EdgeUser current = EdgeUser.findByBaseUser springSecurityService.currentUser as User
+        List<EdgeComputer> myComputers = EdgeComputer.findAllByComputerOwner current
+
+        new UiMenuSpecifier().ui {
+
+            menu EdgesController.&listEdgeUser as MC
+            menu EdgesController.&listEdgeComputer as MC
+
+            if (this.currentComputerId) {
+                menu EdgesController.&listEdgeComputerMatcher as MC, this.currentComputerId
+            }
+
+            menuIcon ActionIcon.DOWNLOAD, EdgesController.&downloadBinGlobalTrustStore as MC
+            menuOptions(new IEnumOptions() {
+                @Override
+                IEnumOption[] getOptions() {
+                    IEnumOption[] res = new IEnumOption[myComputers.size()]
+                    EdgeComputer.findAllByComputerOwner(current).eachWithIndex { c, i ->
+                        res[i] = createIEnumOption c
+                    }
+                    res
+                }
+
+                @Override
+                IEnumOption[] getCurrents() {
+                    EdgeComputer c = EdgeComputer.read(currentComputerId)
+                    return [createIEnumOption(c)] as IEnumOption[]
+                }
+
+                @Override
+                String getParamKey() {
+                    return EdgesController.myComputerId
+                }
+            })
+            menuSearch EdgesController.&search as MC, q
+            menuOptions(SupportedLanguage.fromContext())
+        }
+    }
 
     def index() {
         redirect action: 'listEdgeUser'
@@ -36,7 +99,7 @@ class EdgesController implements WebAttributes {
                 menu this.&listEdgeComputer as MC
                 menuIcon ActionIcon.CREATE, this.&editEdgeComputer as MC
             }
-        }, edgesUiService.buildMenu())
+        }, buildMenu())
     }
 
     def listEdgeUser() {
@@ -45,11 +108,11 @@ class EdgesController implements WebAttributes {
                 menu this.&listEdgeUser as MC
                 menuIcon ActionIcon.CREATE, this.&editEdgeUser as MC
             }
-        }, edgesUiService.buildMenu())
+        }, buildMenu())
     }
 
     def search(String q) {
-        taackUiService.show(edgesUiService.buildSearchBlock(q), edgesUiService.buildMenu(q))
+        taackUiService.show(edgesUiService.buildSearchBlock(q), buildMenu(q))
     }
 
     def showComputer(EdgeComputer computer) {
@@ -135,13 +198,10 @@ class EdgesController implements WebAttributes {
 
     def listEdgeComputerMatcher(EdgeComputer computer) {
         taackUiService.show(new UiBlockSpecifier().ui {
-            modal {
                 table edgesUiService.listEdgeComputerMatcher(computer), {
                     menuIcon ActionIcon.ADD * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputerMatcher as MC, [computerId: computer.id]
                 }
-            }
-        })
-
+        }, buildMenu())
     }
 
     @Transactional
