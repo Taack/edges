@@ -12,6 +12,7 @@ import taack.render.TaackUiService
 import taack.ui.dsl.UiBlockSpecifier
 import taack.ui.dsl.UiShowSpecifier
 import taack.ui.dsl.common.ActionIcon
+import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
 
 import static taack.render.TaackUiService.tr
@@ -135,7 +136,9 @@ class EdgesController implements WebAttributes {
     def listEdgeComputerMatcher(EdgeComputer computer) {
         taackUiService.show(new UiBlockSpecifier().ui {
             modal {
-                table edgesUiService.listEdgeComputerMatcher(computer)
+                table edgesUiService.listEdgeComputerMatcher(computer), {
+                    menuIcon ActionIcon.ADD * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputerMatcher as MC, [computerId: computer.id]
+                }
             }
         })
 

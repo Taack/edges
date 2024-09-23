@@ -78,8 +78,13 @@ class EdgesUiService implements TaackSearchService.IIndexService {
         )
 
         TaackUiEnablerService.securityClosure({ Long id, Map p ->
-            canDownload(EdgeComputer.read(id))
-        }, EdgesController.&downloadBinKeyStore as MC)
+            if (id) canDownload(EdgeComputer.read(id))
+            else true
+        },
+                EdgesController.&downloadBinKeyStore as MC,
+                EdgesController.&listEdgeComputerMatcher as MC,
+                EdgesController.&editEdgeComputer as MC
+        )
     }
 
     boolean canDownload(EdgeComputer ec) {
@@ -126,9 +131,9 @@ class EdgesUiService implements TaackSearchService.IIndexService {
                 rowField computer.lastUpdated_
                 rowField computer.userCreated_
                 rowColumn {
-                    rowAction ActionIcon.ADD * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputerMatcher as MC, [computerId: computer.id]
                     rowAction ActionIcon.EDIT * IconStyle.SCALE_DOWN, EdgesController.&editEdgeComputer as MC, computer.id
                     rowAction ActionIcon.DOWNLOAD * IconStyle.SCALE_DOWN, EdgesController.&downloadBinKeyStore as MC, computer.id
+                    rowAction ActionIcon.SHOW * IconStyle.SCALE_DOWN, EdgesController.&listEdgeComputerMatcher as MC, computer.id
                     rowField computer.name, Style.BOLD
                 }
                 rowField computer.computerOwner_
