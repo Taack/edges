@@ -248,7 +248,11 @@ class EdgesUiService implements WebAttributes, TaackSearchService.IIndexService 
             iterate(taackFilterService.getBuilder(EdgeComputerMatcher)
                     .addRestrictedIds(EdgeComputerMatcher.findAllByComputer(computer)*.id as Long[])
                     .build()) { EdgeComputerMatcher ecmIt ->
-                rowField ecmIt.fileExt
+                rowColumn {
+                    rowAction ActionIcon.REFRESH * IconStyle.SCALE_DOWN, EdgesController.&syncFiles as MC, ecmIt.id
+                    rowAction ActionIcon.IMPORT * IconStyle.SCALE_DOWN, EdgesController.&importAttachment as MC, ecmIt.id
+                    rowField ecmIt.fileExt
+                }
                 rowField ecmIt.filePattern
                 rowField ecmIt.rootPath
                 rowField ecmIt.contentTypeEnumSet_

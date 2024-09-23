@@ -222,5 +222,12 @@ class EdgesController implements WebAttributes {
         taackSaveService.saveThenReloadOrRenderErrors(EdgeComputerMatcher)
     }
 
+    def syncFiles() {
+
+    }
+
+    def importAttachment() {
+
+    }
 }
 
