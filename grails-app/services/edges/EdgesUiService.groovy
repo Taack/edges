@@ -6,6 +6,7 @@ import crew.User
 import grails.compiler.GrailsCompileStatic
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.web.api.WebAttributes
+import jakarta.annotation.PostConstruct
 import org.codehaus.groovy.runtime.MethodClosure as MC
 import org.grails.datastore.gorm.GormEntity
 import org.springframework.beans.factory.annotation.Value
@@ -24,7 +25,6 @@ import taack.ui.dsl.common.ActionIcon
 import taack.ui.dsl.common.IconStyle
 import taack.ui.dsl.common.Style
 
-import javax.annotation.PostConstruct
 import java.nio.file.Path
 
 import static taack.render.TaackUiService.tr
@@ -224,7 +224,7 @@ class EdgesUiService implements WebAttributes, TaackSearchService.IIndexService 
                 col {
                     section('Security') {
                         field matcher.descend_
-                        ajaxField matcher.documentAccess_, AttachmentController.&editAttachmentDescriptor as MC
+                        field matcher.documentAccess_
                     }
                 }
             }

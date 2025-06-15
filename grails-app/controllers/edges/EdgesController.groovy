@@ -9,7 +9,7 @@ import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.annotation.Secured
 import grails.web.api.WebAttributes
 import org.codehaus.groovy.runtime.MethodClosure as MC
-import taack.domain.TaackSaveService
+import taack.render.TaackSaveService
 import taack.render.TaackUiService
 import taack.ui.EnumOption
 import taack.ui.IEnumOption
