@@ -1,6 +1,6 @@
 package edges
 
-import crew.AttachmentController
+
 import crew.CrewController
 import crew.User
 import grails.compiler.GrailsCompileStatic
@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value
 import taack.app.TaackApp
 import taack.app.TaackAppRegisterService
 import taack.domain.TaackFilterService
+import taack.domain.TaackGormClass
+import taack.domain.TaackGormClassRegisterService
 import taack.domain.TaackSearchService
 import taack.render.TaackUiEnablerService
 import taack.solr.SolrFieldType
@@ -51,43 +53,42 @@ class EdgesUiService implements WebAttributes, TaackSearchService.IIndexService 
 
     @PostConstruct
     void init() {
-        TaackAppRegisterService.register(
-                new TaackApp(
-                        EdgesController.&listEdgeUser as MC,
-                        new String(
-                                this.class
-                                        .getResourceAsStream("/edges/edges.svg")
-                                        .readAllBytes()
-                        )
-                )
-        )
+        TaackAppRegisterService.register(new TaackApp(EdgesController.&listEdgeUser as MC,
+                new String(this.class
+                        .getResourceAsStream("/edges/edges.svg")
+                        .readAllBytes())))
         edgesKeystorePath.toFile().mkdirs()
         taackSearchService.registerSolrSpecifier(this,
                 new SolrSpecifier(EdgeComputer,
-                        EdgesController.&showComputer as MC,
-                        this.&labeling as MC, { EdgeComputer ec ->
-                    indexField SolrFieldType.TXT_NO_ACCENT, ec.name_
-                    indexField SolrFieldType.TXT_GENERAL, ec.name_
-                    indexField SolrFieldType.POINT_STRING, "mainSubsidiary", true, ec.computerOwner.baseUser.subsidiary?.toString()
-                    indexField SolrFieldType.POINT_STRING, "businessUnit", true, ec.computerOwner.baseUser.businessUnit?.toString()
-                    indexField SolrFieldType.DATE, 0.5f, true,
-                            ec.dateCreated_
-                    indexField SolrFieldType.POINT_STRING,
-                            "userCreated",  // Faceting String
-                            0.5f,           // Boost factor
-                            true, ec.userCreated?.username
+                        { EdgeComputer ec ->
+                            indexField SolrFieldType.TXT_NO_ACCENT, ec.name_
+                            indexField SolrFieldType.TXT_GENERAL, ec.name_
+                            indexField SolrFieldType.POINT_STRING, "mainSubsidiary", true, ec.computerOwner.baseUser.subsidiary?.toString()
+                            indexField SolrFieldType.POINT_STRING, "businessUnit", true, ec.computerOwner.baseUser.businessUnit?.toString()
+                            indexField SolrFieldType.DATE, 0.5f, true,
+                                    ec.dateCreated_
+                            indexField SolrFieldType.POINT_STRING,
+                                    "userCreated",  // Faceting String
+                                    0.5f,           // Boost factor
+                                    true, ec.userCreated?.username
 
-                })
+                        })
+
         )
 
-        TaackUiEnablerService.securityClosure({ Long id, Map p ->
-            if (id) canDownload(EdgeComputer.read(id))
-            else true
+        TaackGormClassRegisterService.register(new TaackGormClass(EdgeComputer).builder
+                .setShowMethod(EdgesController.&showComputer as MC)
+                .setShowLabel({ Long id ->
+                    def ec = EdgeComputer.read(id)
+                    "Computer: ${ec.name} owner ${ec.computerOwner.baseUser.username} ($id)"
+                })
+                .build(),)
+
+        TaackUiEnablerService.securityClosure({ Long id, Map p -> if (id) canDownload(EdgeComputer.read(id)) else true
         },
                 EdgesController.&downloadBinKeyStore as MC,
                 EdgesController.&listEdgeComputerMatcher as MC,
-                EdgesController.&editEdgeComputer as MC
-        )
+                EdgesController.&editEdgeComputer as MC)
     }
 
     boolean canDownload(EdgeComputer ec) {
@@ -174,11 +175,6 @@ class EdgesUiService implements WebAttributes, TaackSearchService.IIndexService 
         }
     }
 
-    String labeling(Long id) {
-        def ec = EdgeComputer.read(id)
-        "Computer: ${ec.name} owner ${ec.computerOwner.baseUser.username} ($id)"
-    }
-
     UiFormSpecifier editComputer(EdgeComputer computer) {
         new UiFormSpecifier().ui computer, {
             section {
@@ -202,8 +198,7 @@ class EdgesUiService implements WebAttributes, TaackSearchService.IIndexService 
 
     @Override
     List<? extends GormEntity> indexThose(Class<? extends GormEntity> toIndex) {
-        if (toIndex.isAssignableFrom(User)) return User.findAllByEnabled(true)
-        else null
+        if (toIndex.isAssignableFrom(User)) return User.findAllByEnabled(true) else null
     }
 
     UiBlockSpecifier buildSearchBlock(String q) {
